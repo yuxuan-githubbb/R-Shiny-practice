@@ -1,21 +1,21 @@
 
 
 ######################################################################################
-#load library
+#1.load library
 library(readxl)
 library(shiny)
 library(ggplot2)
 library(dplyr)
 library(shinythemes)
 
-###################################### Q2,Q3 #############################################
-#Q2.read file
+##################################################################################
+#2.read file
 setwd("/Users/yuxuanli/Desktop/备份/R For Analytics")
 df <- read_xlsx("window_breakage_data.xlsx", sheet=1, col_names=T)
 #remove spaces in column names
 colnames(df) <- make.names(colnames(df), unique = TRUE)
 
-#Q3.coerce the column
+#3.coerce the column
 colnames_df <- as.vector(colnames(df))
 categorical_vars <- c("Batch", "Window.color",
                       "Window.Type", "Glass.Supplier",
@@ -28,10 +28,10 @@ numeric_df <- df[,numeric_vars]
 categorical_df <- df[,categorical_vars]
 
 ################################# functions & variables used in shiny (for reference) ############################
-## 6. source function
+## 4. source function
 source("DataQualityReportOverall.R")
 DataCompleteness <- DataQualityReportOverall(df)
-## 8. use dply in some fashion
+## 5. use dply in some fashion
 library(dplyr)
 glimpse(df)
 window_type_stat <- df %>%
@@ -45,7 +45,7 @@ window_type_stat <- df %>%
   arrange(desc("Median Breakage Rate")) %>%
   top_n(3)
 
-## 9 use apply() families
+## 6. use apply() families
 # we included apply() and lapply() in shiny, please see Q9 in shiny.
 #lapply() and sapply(), find the max of silicon viscosity and cut speed. lapply() returns in list, sapply() returns in vector
 list_df <- list(A=df$Silicon.Viscosity, B=df$Cut.speed)
@@ -59,11 +59,11 @@ windowsize_fail <- list(mean=mean(df$Window.Size[df$Pass.Fail=="Fail"],na.rm=T),
                         std=sd(df$Window.Size[df$Pass.Fail =="Fail"],na.rm=T))
 mapply_for_comparison <- mapply(FUN=identical,windowsize_pass,windowsize_fail)
 
-## 10 use aggregate()
+## 7. use aggregate()
 aggregation.df <- aggregate(cbind(Glass.thickness,Yield)~Batch+Glass.Supplier, data=df, FUN=mean)
 
 
-##################################################### shiny! ##################################################################
+##################################################### 8.shiny! ##################################################################
 ui <- fluidPage (theme = shinytheme("superhero"),
                  navbarPage(title = "Window Manufacture Summary Dashboard",
                             tabPanel("Plots",sidebarPanel(
@@ -86,7 +86,7 @@ ui <- fluidPage (theme = shinytheme("superhero"),
                                           selected = names(numeric_df)[[2]]),
                               actionButton(inputId = "click", label = "Click Me To Plot!")),
                               
-                              ################################### Q4 ggplot main panel ##############################
+                              ###################################  ggplot main panel ##############################
                               mainPanel (
                                 h2("Histogram"),
                                 plotOutput("hist"),
@@ -101,14 +101,14 @@ ui <- fluidPage (theme = shinytheme("superhero"),
               
                           tabPanel("Tables Summary",
                             sidebarPanel( 
-                               ####################### Q5  table inputs #####################################################
+                               #######################   table inputs #####################################################
                                selectInput('groupby', label = "Choose a variable to show its count", names(categorical_df),
                                            selected =names(categorical_df)[[3]]),
                                actionButton(inputId = "click2", label = "Show Count Table"),
                                selectInput('summary_var', label = "Choose variables to show five number summary", names(numeric_df),
                                            selected =names(categorical_df)[[1]]),
                                actionButton(inputId = "click3", label = "Show Statistics")),
-                            ############################ Q5  table main panel #################################################
+                            ############################   table main panel #################################################
                              mainPanel( 
                                h2("Count Table"),
                                dataTableOutput("count"),
@@ -116,10 +116,10 @@ ui <- fluidPage (theme = shinytheme("superhero"),
                                dataTableOutput("five"))),
                                        
                            tabPanel("Data Explore",
-                              ################################# Q9 apply() input #####################################
+                              #################################  apply() input #####################################
                               sidebarPanel( numericInput('row_col', label = "Mean of rows(1) columns(2)", 2, 
                                                          min = 1, max = 2, step = 1)),
-                              ############################ Q6 Q7 Q8 Q9 Q10 main panel #################################
+                              ############################  main panel #################################
                               mainPanel(  
                                 h2("Data Completeness"),
                                 verbatimTextOutput("completeness"),
@@ -137,7 +137,7 @@ ui <- fluidPage (theme = shinytheme("superhero"),
 
 server <- function(input, output) {
   
-  #################################### Q4.ggplot2 ########################################### 
+  #################################### 9. server: ggplot2 ########################################### 
   #histogram
   observeEvent(input$click,{
     output$hist <- renderPlot({
@@ -180,7 +180,7 @@ server <- function(input, output) {
   })
   
   
-  ################ Q5. Show at least one table that summarize the data ####################
+  ################ Show at least one table that summarize the data ####################
   
   ### Q5 data
   summary_data <- reactive({
@@ -201,11 +201,11 @@ server <- function(input, output) {
   })
   
   
-  ######################### Q6.source function #######################################
+  ######################### source function #######################################
   output$completeness <- renderPrint({DataCompleteness
   })
   
-  ########################### Q7. use loop###################################### 
+  ########################### use loop###################################### 
   # find window type that has the best quality among others
   min_count = 500
   min_i = 0
@@ -220,12 +220,12 @@ server <- function(input, output) {
   }
   output$best <- renderPrint(windowType[i])
   
-  ######################### Q8.use dyplr #############################################
+  ######################### use dyplr #############################################
   output$type_break_stat <- renderDataTable({window_type_stat
   })
   
   
-  ######################### Q9.use apply() families #######################################
+  ######################### use apply() families #######################################
   #apply()
   output$rc <- renderPrint({apply(numeric_df, MARGIN=as.numeric(input$row_col),
                                   FUN=mean, na.rm=TRUE)
@@ -235,7 +235,7 @@ server <- function(input, output) {
     lapply(list(df$Silicon.Viscosity, df$Cut.speed), FUN=max, na.rm=T)
   })
   
-  ########################### Q10. use aggregate()######################################
+  ########################### use aggregate()######################################
   ## 10 use aggregate()
   aggregation_data <- reactive({
     aggregation.df

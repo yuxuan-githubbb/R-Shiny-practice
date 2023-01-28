@@ -46,7 +46,6 @@ window_type_stat <- df %>%
   top_n(3)
 
 ## 6. use apply() families
-# we included apply() and lapply() in shiny, please see Q9 in shiny.
 #lapply() and sapply(), find the max of silicon viscosity and cut speed. lapply() returns in list, sapply() returns in vector
 list_df <- list(A=df$Silicon.Viscosity, B=df$Cut.speed)
 lapply_max_viscosity_speed <- lapply(list_df, FUN=max,na.rm=T)
